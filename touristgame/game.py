@@ -5,12 +5,12 @@ from typing import Literal
 from touristgame.agents import Agent
 
 Strategy = Literal["TP", "TC", "UP", "UC"]
-reward, sucker_payoff, temptation, punishment = 25, 20, 40, 10
+benefit, sucker_payoff, temptation, provider_opportunism = 25, 20, 40, 10
 BASE_PAYOFF: dict[tuple[Strategy, Strategy], tuple[float, float]] = {
-    ("TP", "TC"): (reward, reward),
+    ("TP", "TC"): (benefit, benefit),
     ("TP", "UC"): (-sucker_payoff, temptation),
-    ("UP", "TC"): (punishment, -punishment),
-    ("UP", "UC"): (punishment, -punishment),
+    ("UP", "TC"): (provider_opportunism, -provider_opportunism),
+    ("UP", "UC"): (provider_opportunism, -provider_opportunism),
 }
 
 
@@ -26,10 +26,12 @@ class SquareLatticeNetwork:
         ]
 
     def get_agent(self, location: tuple[int, int]) -> Agent:
+        """Get the agent at a specific location in the grid."""
         row, col = location
         return self.grid[row][col]
 
     def get_neighbors(self, agent: Agent) -> list[Agent]:
+        """Get the four neighbors of a specific agent in the grid."""
         row, col = agent.location
         return [
             self.grid[(row + row_step) % self.size][(col + col_step) % self.size]

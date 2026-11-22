@@ -21,7 +21,7 @@ class Agent:
         self,
         location: tuple[int, int],
         initial_strategy: Strategy = "TC",
-        initial_reputation: float = 0.5,
+        initial_reputation: float = 0.0,
         initial_wealth: float = 0.0,
     ) -> None:
         self.location = location
@@ -34,7 +34,7 @@ class Agent:
         fermi_term = 1.0 / (1.0 + np.exp(self.current_wealth - neighbor_wealth)) - 0.5
         return np.abs(fermi_term) + fermi_term
 
-    def strategy_update(
+    def update_strategy(
         self, neighbor_strategy: Strategy, neighbor_wealth: float
     ) -> None:
         """Update the agent's strategy based on its current strategy."""
