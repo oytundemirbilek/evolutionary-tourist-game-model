@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 
 import numpy as np
+from tqdm import tqdm
 
 from touristgame.agents import MAX_REPUTATION, MIN_REPUTATION, Strategy
 from touristgame.game import PayoffMatrix, SquareLatticeNetwork
@@ -37,8 +38,6 @@ class MonteCarloSimulation:
         scenario: str = "Scenario 1",
         reputation_threshold: float = 5.0,
         max_steps: int = 5000,
-        n_last_steps_stability: int = 100,
-        tolerance: float = 0.01,
     ) -> None:
         self.network = SquareLatticeNetwork(size)
         self.payoff_matrix = PayoffMatrix(reputation_threshold)
@@ -47,7 +46,6 @@ class MonteCarloSimulation:
 
         self.max_steps = max_steps
         self.history: list[dict[str, float]] = []
-        self.n_last_steps_stability = n_last_steps_stability
 
     def initialize(self) -> None:
         """Step 2: give each agent a random strategy, a random reputation and zero wealth."""
@@ -109,3 +107,10 @@ class MonteCarloSimulation:
                 ),
             }
         )
+
+    def run(self) -> None:
+        """Run the Monte Carlo simulation until strategy counts and total wealth stabilize."""
+        self.initialize()
+        for step in tqdm(range(self.max_steps)):
+            self.play_round()
+            self.save_current_state()
