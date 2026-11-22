@@ -2,10 +2,10 @@
 
 from typing import Literal
 
-import numpy as np
+from touristgame.agents import Agent
 
 Strategy = Literal["TP", "TC", "UP", "UC"]
-reward, sucker_payoff, temptation, punishment = 3, 1, 5, 2
+reward, sucker_payoff, temptation, punishment = 25, 20, 40, 10
 BASE_PAYOFF: dict[tuple[Strategy, Strategy], tuple[float, float]] = {
     ("TP", "TC"): (reward, reward),
     ("TP", "UC"): (-sucker_payoff, temptation),
@@ -17,9 +17,24 @@ BASE_PAYOFF: dict[tuple[Strategy, Strategy], tuple[float, float]] = {
 class SquareLatticeNetwork:
     """Represent a square lattice network."""
 
+    NEIGHBOR_OFFSETS = ((-1, 0), (1, 0), (0, -1), (0, 1))
+
     def __init__(self, size: int = 100) -> None:
         self.size = size  # L
-        self.grid = np.zeros((size, size), dtype=int)  # 10000 agents
+        self.grid: list[list[Agent]] = [
+            [Agent(location=(row, col)) for col in range(size)] for row in range(size)
+        ]
+
+    def get_agent(self, location: tuple[int, int]) -> Agent:
+        row, col = location
+        return self.grid[row][col]
+
+    def get_neighbors(self, agent: Agent) -> list[Agent]:
+        row, col = agent.location
+        return [
+            self.grid[(row + row_step) % self.size][(col + col_step) % self.size]
+            for row_step, col_step in self.NEIGHBOR_OFFSETS
+        ]
 
 
 class PayoffMatrix:
