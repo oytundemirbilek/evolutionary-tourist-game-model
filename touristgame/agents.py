@@ -29,9 +29,13 @@ class Agent:
         self.current_reputation = initial_reputation
         self.current_wealth = initial_wealth
 
-    def calculate_strategy_update_probability(self, neighbor_wealth: float) -> float:
+    def calculate_strategy_update_probability(
+        self, neighbor_wealth: float, eps: float = 0.00001
+    ) -> float:
         """Update the agent's strategy based on its current strategy."""
-        fermi_term = 1.0 / (1.0 + np.exp(self.current_wealth - neighbor_wealth)) - 0.5
+        fermi_term = (
+            1.0 / (1.0 + np.exp(self.current_wealth - neighbor_wealth + eps)) - 0.5
+        )
         return np.abs(fermi_term) + fermi_term
 
     def update_strategy(
@@ -71,7 +75,9 @@ class Agent:
             if payoffs is not None:
                 total_wealth += payoffs[own_index]
 
-        self.current_wealth += total_wealth
+        # is total wealth already accumulated when calculating payoff, or should it be accumulated over time?
+        self.current_wealth = total_wealth
+        # self.current_wealth += total_wealth
 
 
 class ExternalAgent:

@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 from touristgame.agents import MAX_REPUTATION, MIN_REPUTATION, Strategy
@@ -21,11 +22,11 @@ STRATEGIES: tuple[Strategy, ...] = ("TP", "TC", "UP", "UC")
 # Scenario 4: More untrustworthy than trustworthy
 # Scenario 5: More trustworthy than untrustworthy
 SCENARIOS: dict[str, dict[Strategy, float]] = {
-    "Scenario 1": {"TP": 0.25, "TC": 0.25, "UP": 0.25, "UC": 0.25},
-    "Scenario 2": {"TP": 0.25, "TC": 0.25, "UP": 0.25, "UC": 0.25},
-    "Scenario 3": {"TP": 0.25, "TC": 0.25, "UP": 0.25, "UC": 0.25},
-    "Scenario 4": {"TP": 0.25, "TC": 0.25, "UP": 0.25, "UC": 0.25},
-    "Scenario 5": {"TP": 0.25, "TC": 0.25, "UP": 0.25, "UC": 0.25},
+    "scenario1": {"TP": 0.25, "TC": 0.25, "UP": 0.25, "UC": 0.25},
+    "scenario2": {"TP": 0.05, "TC": 0.45, "UP": 0.05, "UC": 0.45},
+    "scenario3": {"TP": 0.45, "TC": 0.05, "UP": 0.45, "UC": 0.05},
+    "scenario4": {"TP": 0.05, "TC": 0.05, "UP": 0.45, "UC": 0.45},
+    "scenario5": {"TP": 0.45, "TC": 0.45, "UP": 0.05, "UC": 0.05},
 }
 
 
@@ -35,9 +36,10 @@ class MonteCarloSimulation:
     def __init__(
         self,
         size: int = 100,
-        scenario: str = "Scenario 1",
-        reputation_threshold: float = 5.0,
-        max_steps: int = 5000,
+        scenario: str = "scenario1",
+        reputation_threshold: int = 2,
+        max_steps: int = 10000,
+        snapshot_steps: tuple[int, ...] = (9, 29, 99, 9999),
     ) -> None:
         self.network = SquareLatticeNetwork(size)
         self.payoff_matrix = PayoffMatrix(reputation_threshold)
@@ -46,6 +48,8 @@ class MonteCarloSimulation:
 
         self.max_steps = max_steps
         self.history: list[dict[str, float]] = []
+        self.snapshot_steps = snapshot_steps
+        self.snapshots: list[SquareLatticeNetwork] = []
 
     def initialize(self) -> None:
         """Step 2: give each agent a random strategy, a random reputation and zero wealth."""
@@ -108,9 +112,32 @@ class MonteCarloSimulation:
             }
         )
 
-    def run(self) -> None:
+    def history_to_dataframe(self) -> "pd.DataFrame":
+        """Convert the history of the simulation to a pandas DataFrame."""
+        history_df = pd.DataFrame(self.history)
+        history_df.index.name = "step"
+        return history_df
+
+    def snapshots_to_matrix(self) -> "np.ndarray":
+        """Convert the snapshots of the simulation to a numpy array."""
+        snapshots_matrix = np.array(
+            [
+                [agent.current_strategy for row in snapshot.grid for agent in row]
+                for snapshot in self.snapshots
+            ]
+        )
+        return snapshots_matrix
+
+    def run(
+        self, progress_bar_position: int | None = None
+    ) -> list[SquareLatticeNetwork]:
         """Run the Monte Carlo simulation until strategy counts and total wealth stabilize."""
         self.initialize()
-        for step in tqdm(range(self.max_steps)):
+        snapshots: list[SquareLatticeNetwork] = []
+        for step in tqdm(range(self.max_steps), position=progress_bar_position):
             self.play_round()
             self.save_current_state()
+            if step == self.snapshot_steps:
+                snapshot_network = copy(self.network)
+                snapshots.append(snapshot_network)
+        return snapshots

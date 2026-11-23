@@ -42,7 +42,7 @@ class SquareLatticeNetwork:
 class PayoffMatrix:
     """Represent a payoff matrix."""
 
-    def __init__(self, reputation_threshold: float = 50.0) -> None:
+    def __init__(self, reputation_threshold: int) -> None:
 
         self.reputation_threshold = reputation_threshold  # Z
         self.base_matrix = BASE_PAYOFF
@@ -57,29 +57,11 @@ class PayoffMatrix:
         self, strategy1: Strategy, strategy2: Strategy, reputation_score: float
     ) -> tuple[float, float] | None:
         """Get the payoff resulting from the interaction of two given strategies."""
-        multiplier = 1 + self.calculate_reputation_multiplier(reputation_score)
+        # (R - Z) / Z
+        multiplier = self.calculate_reputation_multiplier(reputation_score)
         scores = self.base_matrix.get((strategy1, strategy2))
         if scores is None:
+            # provider–provider, consumer–consumer interactions are invalid, so returns None
             return None
         score1, score2 = scores
-        return score1 * multiplier, score2 * multiplier
-
-
-class ReputationScoreMatrix:
-    """Represent a reputation score matrix."""
-
-    def __init__(self) -> None:
-        self.reputation_scoring_matrix = BASE_PAYOFF
-
-    def get_reputation(
-        self, strategy1: Strategy, strategy2: Strategy
-    ) -> tuple[float, float] | None:
-        """Get the reputation score resulting from the interaction of two given strategies."""
-        return self.reputation_scoring_matrix.get((strategy1, strategy2))
-
-
-if __name__ == "__main__":
-    # Example usage
-    reputation_matrix = ReputationScoreMatrix()
-    scores = reputation_matrix.get_reputation("TP", "TC")
-    print(scores)
+        return score1 + score1 * multiplier, score2 + score2 * multiplier
