@@ -55,6 +55,7 @@ class Experiment(multiprocessing.Process):
 
 
 if __name__ == "__main__":
+    np.random.seed(42)  # for reproducibility
     Z = [2, 4, 6, 8, 10]
     processes = []
     for i, z in enumerate(Z):

@@ -53,10 +53,12 @@ class MonteCarloSimulation:
 
     def initialize(self) -> None:
         """Step 2: give each agent a random strategy, a random reputation and zero wealth."""
-        strategies = list(self.initial_proportions)
-        probabilities = list(self.initial_proportions.values())
-        for agent in self.agents:
-            agent.current_strategy = np.random.choice(strategies, p=probabilities)
+        strategies = np.array(list(self.initial_proportions))
+        probabilities = np.array(list(self.initial_proportions.values()))
+        strategy_counts = np.round(probabilities * len(self.agents)).astype(int)
+        strategy_pool = np.random.permutation(np.repeat(strategies, strategy_counts))
+        for agent, strategy in zip(self.agents, strategy_pool, strict=True):
+            agent.current_strategy = strategy
             agent.current_wealth = 0.0
             agent.current_reputation = np.random.randint(
                 MIN_REPUTATION, MAX_REPUTATION + 1
@@ -134,6 +136,8 @@ class MonteCarloSimulation:
         """Run the Monte Carlo simulation until strategy counts and total wealth stabilize."""
         self.initialize()
         snapshots: list[SquareLatticeNetwork] = []
+        self.save_current_state()
+
         for step in tqdm(range(self.max_steps), position=progress_bar_position):
             self.play_round()
             self.save_current_state()

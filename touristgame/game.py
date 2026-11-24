@@ -5,6 +5,7 @@ from typing import Literal
 from touristgame.agents import Agent
 
 Strategy = Literal["TP", "TC", "UP", "UC"]
+# 2B > T > B > S > X
 benefit, sucker_payoff, temptation, provider_opportunism = 25, 20, 40, 10
 BASE_PAYOFF: dict[tuple[Strategy, Strategy], tuple[float, float]] = {
     ("TP", "TC"): (benefit, benefit),
@@ -64,4 +65,4 @@ class PayoffMatrix:
             # provider–provider, consumer–consumer interactions are invalid, so returns None
             return None
         score1, score2 = scores
-        return score1 + score1 * multiplier, score2 + score2 * multiplier
+        return score1 * abs(score1) * multiplier, score2 * abs(score2) * multiplier
